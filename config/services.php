@@ -41,4 +41,10 @@ return [
          'secret' => env('STRIPE_SECRET'),
     ],
 
+    'evolution' => [
+        'key' => env('EVOLUTION_API_KEY'),
+        'url' => env('EVOLUTION_URL'),
+        'url_webhook' => env('EVOLUTION_URL_WEBHOOK'),
+    ],
+
 ];

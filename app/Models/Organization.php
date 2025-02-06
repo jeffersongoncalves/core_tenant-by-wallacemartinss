@@ -60,5 +60,10 @@ class Organization extends Model
         return $this->hasMany(SubscriptionRefund::class);
     }
 
+    public function whatsappInstances(): HasMany
+    {
+        return $this->hasMany(WhatsappInstance::class);
+    }
+
 
 }

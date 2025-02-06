@@ -43,26 +43,26 @@ class ProductResource extends Resource
                         TextInput::make('stripe_id')
                             ->label('Id Plano Stripe')
                             ->readOnly(),
-                    ]),
 
-                Fieldset::make('Label')
-                    ->schema([
                         TextInput::make('name')
                             ->label('Nome do Plano')
                             ->required()
                             ->maxLength(255),
+
                         TextInput::make('description')
                             ->label('Descrição do Plano')
                             ->required()
                             ->maxLength(255),
-                    ])->columns(2),
+
+                    ])->columns(3),
 
                 Fieldset::make('Imagem do Plano')
                 ->schema([
                     FileUpload::make('image')
                         ->label('Imagem do Plano')
                         ->image()
-                        ->imageEditor(),
+                        ->imageEditor()
+                        ->columnSpanFull(),
                 ]),
             ]);
     }

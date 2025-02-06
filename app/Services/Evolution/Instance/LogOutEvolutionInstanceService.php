@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Services\Evolution\Instance;
+
+use App\Services\Traits\EvolutionClientTrait;
+use Exception;
+
+class LogOutEvolutionInstanceService
+{
+    use EvolutionClientTrait;
+
+    public function logoutInstance(string $instanceId)
+    {
+        try {
+            $response = $this->makeRequest("/instance/{$instanceId}/logout", 'DELETE');
+
+            //dd($response);
+            if (isset($response['error'])) {
+                throw new Exception($response['error']);
+            }
+
+            return $response;
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+}

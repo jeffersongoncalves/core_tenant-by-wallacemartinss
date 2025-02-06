@@ -11,10 +11,11 @@ services:
       - ./:/var/www/
     restart: unless-stopped
     depends_on:
+      - redis
       - queue
       - mysql
     networks:
-      - development
+      - tenant
 
   queue:
     build:
@@ -30,7 +31,7 @@ services:
     depends_on:
       - mysql
     networks:
-      - development
+      - tenant
 
   nginx:
     image: nginx:alpine
@@ -41,7 +42,7 @@ services:
       - ./:/var/www
       - ./docker/nginx/:/etc/nginx/conf.d/
     networks:
-      - development
+      - tenant
 
   mysql:
     image: mysql:latest
@@ -63,7 +64,25 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - development
+      - tenant
+
+
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    networks:
+      - tenant
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: on-failure
+    tty: true
+    ports:
+      - 1025:1025 # SMTP server
+      - 8025:8025 # Web UI
+    networks:
+      - tenant
 
   stripe:
     image: "stripe/stripe-cli:latest"
@@ -73,11 +92,11 @@ services:
     command:
         stripe listen --forward-to http://172.17.0.1/stripe/webhook
     networks:
-      - development
+      - tenant
 
 volumes:
   mysql-data:
 
 networks:
-  development:
-    external: true
+  tenant:
+    driver: bridge
