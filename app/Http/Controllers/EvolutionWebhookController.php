@@ -2,14 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Organization;
-use App\Models\WebhookEvent;
-use Illuminate\Http\Request;
-use App\Models\WhatsappInstance;
-use Illuminate\Support\Facades\Log;
-use Filament\Notifications\Notification;
 use App\Enums\Evolution\StatusConnectionEnum;
+use App\Models\{Organization, WebhookEvent, WhatsappInstance};
+use Filament\Notifications\Notification;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class EvolutionWebhookController extends Controller
 {
@@ -67,39 +64,38 @@ class EvolutionWebhookController extends Controller
     {
         $instance = WhatsappInstance::where('name', $data['instance'])->first();
 
-            // Verifica se a instância existe
-            if (!$instance) {
-                return; //caso nenhuma instância seja encontrada, aborta fluxo para não repetir as notificações
-            }
+        // Verifica se a instância existe
+        if (!$instance) {
+            return; //caso nenhuma instância seja encontrada, aborta fluxo para não repetir as notificações
+        }
 
-            // Verifica se o estado atual da instância bate com o estado do webhook
-            if ($data['data']['state'] === $instance->status) {
-                return; //caso possua o mesmo status, aborta fluxo para não repetir as notificações
-            }
+        // Verifica se o estado atual da instância bate com o estado do webhook
+        if ($data['data']['state'] === $instance->status) {
+            return; //caso possua o mesmo status, aborta fluxo para não repetir as notificações
+        }
 
-            // Se o estado for Conectado, Desconectado ou Recusado, limpa o QR Code da tabela
-            if ($data['data']['state'] === 'open' || $data['data']['state'] === 'close' || $data['data']['state'] === 'refused') {
-                $instance->update(['qr_code' => null]);
-            }
+        // Se o estado for Conectado, Desconectado ou Recusado, limpa o QR Code da tabela
+        if ($data['data']['state'] === 'open' || $data['data']['state'] === 'close' || $data['data']['state'] === 'refused') {
+            $instance->update(['qr_code' => null]);
+        }
 
-            // Atualiza o status da instância
-            $instance->update(['status' => $data['data']['state']]);
+        // Atualiza o status da instância
+        $instance->update(['status' => $data['data']['state']]);
 
-            // Busca o admin da organização
-            $organization = Organization::find($instance->organization_id);
-            $adminUser = $organization->members()->where('is_tenant_admin', true)->first();
+        // Busca o admin da organização
+        $organization = Organization::find($instance->organization_id);
+        $adminUser    = $organization->members()->where('is_tenant_admin', true)->first();
 
-            // Traduz o status com o Enum de Conexão
-            $stateLabel = StatusConnectionEnum::tryFrom($data['data']['state'])->getLabel();
+        // Traduz o status com o Enum de Conexão
+        $stateLabel = StatusConnectionEnum::tryFrom($data['data']['state'])->getLabel();
 
-            // Envia a notificação ao admin do tenant
-            Notification::make()
-                ->title('Status da Instância Atualizado')
-                ->body("A instância {$data['instance']} teve seu status atualizado para {$stateLabel}.")
-                ->sendToDatabase($adminUser);
+        // Envia a notificação ao admin do tenant
+        Notification::make()
+            ->title('Status da Instância Atualizado')
+            ->body("A instância {$data['instance']} teve seu status atualizado para {$stateLabel}.")
+            ->sendToDatabase($adminUser);
 
     }
-
     // Lida com o evento de atualização do QrCode do whatsapp
     private function handleQrcodeUpdated($data)
     {
@@ -108,25 +104,29 @@ class EvolutionWebhookController extends Controller
             Log::error("Erro no evento QRCODE_UPDATED: {$data['message']} (Código: {$data['statusCode']})");
 
             $instance = WhatsappInstance::where('name', $data['instance'] ?? null)->first();
+
             if ($instance) {
                 $organization = Organization::find($instance->organization_id);
-            if ($organization) {
-                $adminUser = $organization->members()->where('is_tenant_admin', true)->first();
 
-                if ($adminUser) {
-                    Notification::make()
-                        ->title('Erro ao Atualizar QR Code')
-                        ->body("A instância {$data['instance']} encontrou um erro: {$data['message']}. Tente logar novamente.")
-                        ->sendToDatabase($adminUser);
+                if ($organization) {
+                    $adminUser = $organization->members()->where('is_tenant_admin', true)->first();
+
+                    if ($adminUser) {
+                        Notification::make()
+                            ->title('Erro ao Atualizar QR Code')
+                            ->body("A instância {$data['instance']} encontrou um erro: {$data['message']}. Tente logar novamente.")
+                            ->sendToDatabase($adminUser);
                     }
                 }
             }
+
             return;
         }
 
         // Verifica se o webhook contém os dados necessários
         if (empty($data['data']['qrcode']['base64']) || empty($data['instance'])) {
             Log::warning('Evento QRCODE_UPDATED recebido com dados incompletos: ' . json_encode($data));
+
             return;
         }
 
@@ -135,14 +135,15 @@ class EvolutionWebhookController extends Controller
 
         if (!$instance) {
             Log::warning("Nenhuma instância encontrada para '{$data['instance']}' no evento QRCODE_UPDATED.");
+
             return;
         }
 
         // Atualiza o QR Code na instância
         $instance->update([
-            'qr_code' => $data['data']['qrcode']['base64'],
+            'qr_code'      => $data['data']['qrcode']['base64'],
             'pairing_code' => $data['data']['qrcode']['pairingCode'] ?? '',
-            'updated_at' => now(),
+            'updated_at'   => now(),
         ]);
 
         Log::info("QR Code atualizado para {$data['data']['qrcode']['base64']}");
@@ -152,12 +153,15 @@ class EvolutionWebhookController extends Controller
 
         if (!$organization) {
             Log::warning("Nenhuma organização encontrada para a instância {$data['instance']}.");
+
             return;
         }
 
         $adminUser = $organization->members()->where('is_tenant_admin', true)->first();
+
         if (!$adminUser) {
             Log::warning("Nenhum administrador encontrado para a organização ID {$organization->id}.");
+
             return;
         }
 
@@ -209,6 +213,5 @@ class EvolutionWebhookController extends Controller
     {
 
     }
-
 
 }

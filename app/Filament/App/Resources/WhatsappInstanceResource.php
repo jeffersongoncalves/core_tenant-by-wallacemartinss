@@ -2,37 +2,22 @@
 
 namespace App\Filament\App\Resources;
 
-use Exception;
-use Filament\Tables;
-use Filament\Forms\Form;
-use Filament\Tables\Table;
-use Filament\Facades\Filament;
+use App\Filament\App\Resources\WhatsappInstanceResource\{Pages};
 use App\Models\WhatsappInstance;
-use Filament\Resources\Resource;
-use Illuminate\Support\HtmlString;
-use Filament\Tables\Actions\Action;
-use Filament\Forms\Components\Section;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\ViewAction;
-use Filament\Forms\Components\TextInput;
+use App\Services\Evolution\Instance\{ConnectEvolutionInstanceService, DeleteEvolutionInstanceService};
+use Filament\Facades\Filament;
+use Filament\Forms\Components\{Section, TextInput, ToggleButtons};
+use Filament\Forms\Form;
 use Filament\Notifications\Notification;
-use Filament\Tables\Actions\ActionGroup;
-use Filament\Tables\Actions\DeleteAction;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Forms\Components\ToggleButtons;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Actions\{Action, ActionGroup, DeleteAction, EditAction, ViewAction};
+use Filament\Tables\Table;
 use Leandrocfe\FilamentPtbrFormFields\PhoneNumber;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\App\Resources\WhatsappInstanceResource\Pages;
-use App\Services\Evolution\Instance\DeleteEvolutionInstanceService;
-use App\Services\Evolution\Instance\LogOutEvolutionInstanceService;
-use App\Services\Evolution\Instance\ConnectEvolutionInstanceService;
-use App\Services\Evolution\Instance\RestartEvolutionInstanceService;
-use App\Filament\App\Resources\WhatsappInstanceResource\RelationManagers;
-
 
 class WhatsappInstanceResource extends Resource
 {
-        protected static ?string $model = WhatsappInstance::class;
+    protected static ?string $model = WhatsappInstance::class;
 
     protected static ?string $navigationIcon = 'fab-whatsapp';
 
@@ -79,53 +64,53 @@ class WhatsappInstanceResource extends Resource
 
                     ])->columns(2),
 
-                    Section::make('Dados da Instância')
-                        ->schema([
-                            ToggleButtons::make('groups_ignore')
-                            ->label('Ignorar Grupos')
-                            ->inline()
-                            ->boolean()
-                            ->required(),
+                Section::make('Dados da Instância')
+                    ->schema([
+                        ToggleButtons::make('groups_ignore')
+                        ->label('Ignorar Grupos')
+                        ->inline()
+                        ->boolean()
+                        ->required(),
 
-                            ToggleButtons::make('always_online')
-                            ->label('Status Sempre Online')
-                            ->inline()
-                            ->boolean()
-                            ->required(),
+                        ToggleButtons::make('always_online')
+                        ->label('Status Sempre Online')
+                        ->inline()
+                        ->boolean()
+                        ->required(),
 
-                            ToggleButtons::make('read_messages')
-                            ->label('Marcar Mensagens como Lidas')
-                            ->inline()
-                            ->boolean()
-                            ->required(),
+                        ToggleButtons::make('read_messages')
+                        ->label('Marcar Mensagens como Lidas')
+                        ->inline()
+                        ->boolean()
+                        ->required(),
 
-                            ToggleButtons::make('read_status')
-                            ->label('Marcar Status como Lido')
-                            ->inline()
-                            ->boolean()
-                            ->required(),
+                        ToggleButtons::make('read_status')
+                        ->label('Marcar Status como Lido')
+                        ->inline()
+                        ->boolean()
+                        ->required(),
 
-                            ToggleButtons::make('sync_full_history')
-                            ->label('Sincronizar Histórico')
-                            ->inline()
-                            ->boolean()
-                            ->required(),
+                        ToggleButtons::make('sync_full_history')
+                        ->label('Sincronizar Histórico')
+                        ->inline()
+                        ->boolean()
+                        ->required(),
 
-                            ToggleButtons::make('reject_call')
-                            ->label('Rejeitar Chamadas')
-                            ->inline()
-                            ->boolean()
-                            ->live()
-                            ->reactive()
-                            ->required(),
+                        ToggleButtons::make('reject_call')
+                        ->label('Rejeitar Chamadas')
+                        ->inline()
+                        ->boolean()
+                        ->live()
+                        ->reactive()
+                        ->required(),
 
-                            TextInput::make('msg_call')
-                            ->label('Mensagem para Chamadas Rejeitadas')
-                            ->required()
-                            ->hidden(fn ($get) => $get('reject_call') == false)
-                            ->maxLength(255),
+                        TextInput::make('msg_call')
+                        ->label('Mensagem para Chamadas Rejeitadas')
+                        ->required()
+                        ->hidden(fn ($get) => $get('reject_call') == false)
+                        ->maxLength(255),
 
-                        ])->columns(4),
+                    ])->columns(4),
             ]);
     }
 
@@ -175,7 +160,7 @@ class WhatsappInstanceResource extends Resource
                         )
                         ->modalWidth('md') // ou sm, lg, xl, 2xl, 3xl, 4xl, 5xl, 6xl, 7xl
                         ->modalContent(fn ($record) => view('evolution.qr-code-modal', [
-                            'qrCode' => str_replace('\/', '/', $record->getRawOriginal('qr_code'))
+                            'qrCode' => str_replace('\/', '/', $record->getRawOriginal('qr_code')),
                         ])),
 
                 ActionGroup::make([
@@ -184,7 +169,7 @@ class WhatsappInstanceResource extends Resource
                     ->icon('fas-sign-in-alt')
                     ->color('info')
                     ->action(function ($record) {
-                        $service = new ConnectEvolutionInstanceService();
+                        $service  = new ConnectEvolutionInstanceService();
                         $response = $service->connectInstance($record->name);
 
                         if (isset($response['error'])) {
@@ -207,11 +192,11 @@ class WhatsappInstanceResource extends Resource
                     DeleteAction::make()
                         ->action(function ($record) {
 
-                                $service = new DeleteEvolutionInstanceService();
-                                $response = $service->deleteInstance($record->name);
+                            $service  = new DeleteEvolutionInstanceService();
+                            $response = $service->deleteInstance($record->name);
 
-                                // Deleta o registro local após sucesso na API
-                                $record->delete();
+                            // Deleta o registro local após sucesso na API
+                            $record->delete();
 
                         }),
                 ])
@@ -233,10 +218,10 @@ class WhatsappInstanceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListWhatsappInstances::route('/'),
+            'index'  => Pages\ListWhatsappInstances::route('/'),
             'create' => Pages\CreateWhatsappInstance::route('/create'),
-            'view' => Pages\ViewWhatsappInstance::route('/{record}'),
-            'edit' => Pages\EditWhatsappInstance::route('/{record}/edit'),
+            'view'   => Pages\ViewWhatsappInstance::route('/{record}'),
+            'edit'   => Pages\EditWhatsappInstance::route('/{record}/edit'),
         ];
     }
 }

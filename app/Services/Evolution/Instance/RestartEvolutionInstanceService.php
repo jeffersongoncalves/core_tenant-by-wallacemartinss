@@ -8,7 +8,6 @@ use Exception;
 class RestartEvolutionInstanceService
 {
     use EvolutionClientTrait;
-
     public function restartInstance(string $instanceId)
     {
         try {
@@ -18,12 +17,13 @@ class RestartEvolutionInstanceService
                 throw new Exception($response['error']);
             }
 
-           // Após o restart, chamar o serviço de conexão para gerar o QR Code
-           $connectService = new ConnectEvolutionInstanceService();
-           return $connectService->connectInstance($instanceId);
+            // Após o restart, chamar o serviço de conexão para gerar o QR Code
+            $connectService = new ConnectEvolutionInstanceService();
 
-       } catch (Exception $e) {
-           return ['error' => $e->getMessage()];
-       }
+            return $connectService->connectInstance($instanceId);
+
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
     }
 }

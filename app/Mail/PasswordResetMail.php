@@ -3,15 +3,17 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
 class PasswordResetMail extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use Queueable;
+    use SerializesModels;
 
     public string $password;
+
     public string $name;
 
     /**
@@ -22,7 +24,7 @@ class PasswordResetMail extends Mailable implements ShouldQueue
     public function __construct(string $password, string $name)
     {
         $this->password = $password;
-        $this->name = $name;
+        $this->name     = $name;
     }
 
     /**
@@ -36,7 +38,7 @@ class PasswordResetMail extends Mailable implements ShouldQueue
                     ->view('emails.password-reset')
                     ->with([
                         'password' => $this->password,
-                        'name' => $this->name
+                        'name'     => $this->name,
                     ]);
     }
 }

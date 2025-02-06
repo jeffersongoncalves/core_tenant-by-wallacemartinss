@@ -44,7 +44,7 @@ class StatsTicketsOverview extends BaseWidget
 
                 $averageTime = $totalHours / $tickets->count();
 
-                return number_format(max($averageTime, 0), 2, ',', '.').' horas';
+                return number_format(max($averageTime, 0), 2, ',', '.') . ' horas';
             })
                 ->description('tempo')
                 ->color('warning')

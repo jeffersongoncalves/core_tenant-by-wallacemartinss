@@ -1,10 +1,7 @@
 <?php
 
-use App\Livewire\QrCodeModal;
-
-use App\Http\Controllers\EvolutionWebhookController;
+use App\Http\Controllers\{EvolutionWebhookController, StripeWebhookController};
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\StripeWebhookController;
 
 Route::get('/', function () {
     return redirect('/app');
@@ -15,5 +12,3 @@ Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle']);
 
 //Rota do webhook custom evolution
 Route::post('/evolution/webhook', [EvolutionWebhookController::class, 'handle']);
-
-

@@ -2,9 +2,9 @@
 
 namespace App\Services\Evolution\Instance;
 
-use Exception;
 use App\Models\WhatsappInstance;
 use App\Services\Traits\EvolutionClientTrait;
+use Exception;
 
 class ConnectEvolutionInstanceService
 {
@@ -22,8 +22,8 @@ class ConnectEvolutionInstanceService
             // Atualizar o banco com os dados retornados
 
             WhatsappInstance::where('name', $instanceId)->update([
-                'qr_code' => $response['base64'] ?? null,
-                'count' => $response['count'] ?? null,
+                'qr_code'      => $response['base64'] ?? null,
+                'count'        => $response['count'] ?? null,
                 'pairing_code' => $response['pairingCode'] ?? null,
             ]);
 

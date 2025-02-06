@@ -2,12 +2,7 @@
 
 namespace App\Services\Evolution\Instance;
 
-use App\Services\Traits\EvolutionClientTrait;
-
 namespace App\Services\Evolution\Instance;
-
-use App\Services\Traits\EvolutionClientTrait;
-use Exception;
 
 class DeleteEvolutionInstanceService
 {
@@ -16,10 +11,8 @@ class DeleteEvolutionInstanceService
     public function deleteInstance(string $instanceID)
     {
 
-            $response = $this->makeRequest("/instance/delete/{$instanceID}", 'DELETE');
+        $response = $this->makeRequest("/instance/delete/{$instanceID}", 'DELETE');
 
-
-
-            return $response;
-            }
+        return $response;
+    }
 }
