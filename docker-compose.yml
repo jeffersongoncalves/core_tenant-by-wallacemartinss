@@ -1,3 +1,17 @@
+networks:
+  tenant:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    name: mysql-data
+    driver: local
+  postgres_data_evolution:
+    name: postgres_data_evolution
+    driver: local
+  evolution_instances_data:
+    driver: local
+
 services:
   app:
     build:
@@ -11,10 +25,11 @@ services:
       - ./:/var/www/
     restart: unless-stopped
     depends_on:
+      - redis
       - queue
       - mysql
     networks:
-      - development
+      - tenant
 
   queue:
     build:
@@ -30,7 +45,7 @@ services:
     depends_on:
       - mysql
     networks:
-      - development
+      - tenant
 
   nginx:
     image: nginx:alpine
@@ -41,7 +56,7 @@ services:
       - ./:/var/www
       - ./docker/nginx/:/etc/nginx/conf.d/
     networks:
-      - development
+      - tenant
 
   mysql:
     image: mysql:latest
@@ -63,11 +78,66 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - development
+      - tenant
 
-volumes:
-  mysql-data:
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    networks:
+      - tenant
 
-networks:
-  development:
-    external: true
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: on-failure
+    tty: true
+    ports:
+      - 1025:1025 # SMTP server
+      - 8025:8025 # Web UI
+    networks:
+      - tenant
+
+  evolution:
+    container_name: evolution-api
+    image: atendai/evolution-api:v2.2.2
+    build:
+      context: .
+      dockerfile: Dockerfile.evolution
+    restart: always
+    env_file:
+      - .env
+    environment:
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION: pgsql
+      DATABASE_CONNECTION_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db-evolution:${POSTGRES_PORT}/evolution
+    ports:
+      - "8080:8080"
+    networks:
+      - tenant
+    volumes:
+      - evolution_instances_data:/evolution/instances
+
+  postgres:
+    container_name: postgres-db-evolution
+    build:
+      context: .
+      dockerfile: Dockerfile.postgresSql
+    restart: unless-stopped
+    environment:
+      PGDATA: /var/lib/postgresql/data
+      LANG: C.UTF-8
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    networks:
+      - tenant
+    volumes:
+      - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+      - postgres_data_evolution:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
