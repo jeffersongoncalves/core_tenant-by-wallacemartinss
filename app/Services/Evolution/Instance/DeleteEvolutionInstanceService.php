@@ -2,7 +2,7 @@
 
 namespace App\Services\Evolution\Instance;
 
-namespace App\Services\Evolution\Instance;
+use App\Services\Traits\EvolutionClientTrait;
 
 class DeleteEvolutionInstanceService
 {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Evolution\StatusConnectionEnum;
 use App\Models\{Organization, WebhookEvent, WhatsappInstance};
+use App\Services\Evolution\Instance\FetchEvolutionInstanceService;
 use Filament\Notifications\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -81,6 +82,12 @@ class EvolutionWebhookController extends Controller
 
         // Atualiza o status da instância
         $instance->update(['status' => $data['data']['state']]);
+
+        // Chamar serviço para atualizar a foto de perfil da instância
+        if ($data['data']['state'] === 'open') {
+            $fetchService = new FetchEvolutionInstanceService();
+            $fetchService->fetchInstance($data['instance']);
+        }
 
         // Busca o admin da organização
         $organization = Organization::find($instance->organization_id);

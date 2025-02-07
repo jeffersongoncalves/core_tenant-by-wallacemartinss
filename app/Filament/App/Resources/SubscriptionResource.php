@@ -19,12 +19,19 @@ use IbrahimBougaoua\FilamentRatingStar\Forms\Components\RatingStar;
 class SubscriptionResource extends Resource
 {
     protected static ?string $model = Subscription::class;
+
     protected static ?string $navigationIcon = 'fas-hand-holding-dollar';
+
     protected static ?string $navigationGroup = 'Administração';
+
     protected static ?string $navigationLabel = 'Minhas Assinaturas';
+
     protected static ?string $modelLabel = 'Minha Assinatura';
+
     protected static ?string $modelLabelPlural = "Minhas Assinaturas";
+
     protected static ?int $navigationSort = 1;
+
     protected static bool $isScopedToTenant = true;
 
     public static function form(Form $form): Form
@@ -154,6 +161,7 @@ class SubscriptionResource extends Resource
 
                                 $cancellationService = new CancelSubscriptionService();
                                 $cancellationService->cancel($record, $data);
+
                             } catch (\Exception $e) {
 
                                 Notification::make()

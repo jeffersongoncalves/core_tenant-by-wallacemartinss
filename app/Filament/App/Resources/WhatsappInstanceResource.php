@@ -3,15 +3,18 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\WhatsappInstanceResource\{Pages};
-use App\Models\WhatsappInstance;
-use App\Services\Evolution\Instance\{ConnectEvolutionInstanceService, DeleteEvolutionInstanceService};
+use App\Models\{WhatsappInstance};
+use App\Services\Evolution\Instance\{ConnectEvolutionInstanceService, DeleteEvolutionInstanceService, LogOutEvolutionInstanceService};
+use App\Services\Evolution\Instance\{FetchEvolutionInstanceService, RestartEvolutionInstanceService};
+use App\Services\Evolution\Message\SendMessageEvolutionService;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\{Section, TextInput, ToggleButtons};
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Actions\{Action, ActionGroup, DeleteAction, EditAction, ViewAction};
+use Filament\Tables\Columns\{ImageColumn, TextColumn};
 use Filament\Tables\Table;
 use Leandrocfe\FilamentPtbrFormFields\PhoneNumber;
 
@@ -32,7 +35,6 @@ class WhatsappInstanceResource extends Resource
     protected static ?int $navigationSort = 3;
 
     protected static bool $isScopedToTenant = true;
-
     public static function form(Form $form): Form
     {
         return $form
@@ -57,7 +59,7 @@ class WhatsappInstanceResource extends Resource
                             ->mask('+55 (99) 99999-9999')
                             ->placeholder('+55 (99) 99999-9999')
                             ->required()
-                            ->prefixIcon('fas-phone')
+                            ->prefixIcon('fab-whatsapp')
                             ->validationMessages([
                                 'unique' => 'Número já cadastrado.',
                             ]),
@@ -67,48 +69,48 @@ class WhatsappInstanceResource extends Resource
                 Section::make('Dados da Instância')
                     ->schema([
                         ToggleButtons::make('groups_ignore')
-                        ->label('Ignorar Grupos')
-                        ->inline()
-                        ->boolean()
-                        ->required(),
+                            ->label('Ignorar Grupos')
+                            ->inline()
+                            ->boolean()
+                            ->required(),
 
                         ToggleButtons::make('always_online')
-                        ->label('Status Sempre Online')
-                        ->inline()
-                        ->boolean()
-                        ->required(),
+                            ->label('Status Sempre Online')
+                            ->inline()
+                            ->boolean()
+                            ->required(),
 
                         ToggleButtons::make('read_messages')
-                        ->label('Marcar Mensagens como Lidas')
-                        ->inline()
-                        ->boolean()
-                        ->required(),
+                            ->label('Marcar Mensagens como Lidas')
+                            ->inline()
+                            ->boolean()
+                            ->required(),
 
                         ToggleButtons::make('read_status')
-                        ->label('Marcar Status como Lido')
-                        ->inline()
-                        ->boolean()
-                        ->required(),
+                            ->label('Marcar Status como Lido')
+                            ->inline()
+                            ->boolean()
+                            ->required(),
 
                         ToggleButtons::make('sync_full_history')
-                        ->label('Sincronizar Histórico')
-                        ->inline()
-                        ->boolean()
-                        ->required(),
+                            ->label('Sincronizar Histórico')
+                            ->inline()
+                            ->boolean()
+                            ->required(),
 
                         ToggleButtons::make('reject_call')
-                        ->label('Rejeitar Chamadas')
-                        ->inline()
-                        ->boolean()
-                        ->live()
-                        ->reactive()
-                        ->required(),
+                            ->label('Rejeitar Chamadas')
+                            ->inline()
+                            ->boolean()
+                            ->live()
+                            ->reactive()
+                            ->required(),
 
                         TextInput::make('msg_call')
-                        ->label('Mensagem para Chamadas Rejeitadas')
-                        ->required()
-                        ->hidden(fn ($get) => $get('reject_call') == false)
-                        ->maxLength(255),
+                            ->label('Mensagem para Chamadas Rejeitadas')
+                            ->required()
+                            ->hidden(fn ($get) => $get('reject_call') == false)
+                            ->maxLength(255),
 
                     ])->columns(4),
             ]);
@@ -118,25 +120,36 @@ class WhatsappInstanceResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('status')
+                ImageColumn::make('profile_picture_url')
+                    ->label('Imagem de Perfil')
+                    ->alignCenter()
+                    ->circular()
+                    ->getStateUsing(fn ($record) => $record->profile_picture_url ?: 'https://www.cidademarketing.com.br/marketing/wp-content/uploads/2018/12/whatsapp-640x640.png'),
+
+                TextColumn::make('status')
                     ->label('Status')
                     ->alignCenter()
                     ->badge()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('name')
+
+                TextColumn::make('name')
                     ->label('Nome da Instância')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('number')
+
+                TextColumn::make('number')
                     ->label('Número')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('instance_id')
+
+                TextColumn::make('instance_id')
                     ->label('ID da Instância')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -146,66 +159,180 @@ class WhatsappInstanceResource extends Resource
             ])
             ->actions([
                 Action::make('showQr')
-                        ->label('QR Code')
-                        ->icon('heroicon-o-qr-code')
-                        ->color('success')
-                        ->modalHeading('Qr Code WhatsApp')
-                        ->modalSubmitAction(false)
-                        ->modalCancelAction(
-                            \Filament\Actions\Action::make('close')
-                                ->label('FECHAR')
-                                ->color('danger') // Cores: primary, secondary, success, danger, warning, gray
-                                ->extraAttributes(['class' => 'w-full']) // Largura total
-                                ->close()
-                        )
-                        ->modalWidth('md') // ou sm, lg, xl, 2xl, 3xl, 4xl, 5xl, 6xl, 7xl
-                        ->modalContent(fn ($record) => view('evolution.qr-code-modal', [
-                            'qrCode' => str_replace('\/', '/', $record->getRawOriginal('qr_code')),
-                        ])),
+                    ->hidden(fn ($record) => $record->status->value === 'open')
+                    ->label('QR Code')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('success')
+                    ->modalHeading('Qr Code WhatsApp')
+                    ->modalSubmitAction(false)
+                    ->modalCancelAction(
+                        \Filament\Actions\Action::make('close')
+                            ->label('FECHAR')
+                            ->color('danger') // Cores: primary, secondary, success, danger, warning, gray
+                            ->extraAttributes(['class' => 'w-full']) // Largura total
+                            ->close()
+                    )
+                    ->modalWidth('md') // ou sm, lg, xl, 2xl, 3xl, 4xl, 5xl, 6xl, 7xl
+                    ->modalContent(fn ($record) => view('evolution.qr-code-modal', [
+                        'qrCode' => str_replace('\/', '/', $record->getRawOriginal('qr_code')),
+                    ])),
 
                 ActionGroup::make([
                     Action::make('RestartInstance')
-                    ->label('Reconectar Instância')
-                    ->icon('fas-sign-in-alt')
-                    ->color('info')
-                    ->action(function ($record) {
-                        $service  = new ConnectEvolutionInstanceService();
-                        $response = $service->connectInstance($record->name);
+                        ->label('Reiniciar Instância')
+                        ->hidden(fn ($record) => $record->status->value === 'close')
+                        ->icon('fas-rotate-right')
+                        ->color('warning')
+                        ->action(function ($record) {
+                            $service  = new RestartEvolutionInstanceService();
+                            $response = $service->restartInstance($record->name);
 
-                        if (isset($response['error'])) {
-                            Notification::make()
-                                ->title('Erro ao reconectar')
-                                ->danger()
-                                ->send();
-                        } else {
-                            Notification::make()
-                                ->title('Instância reconectada')
-                                ->success()
-                                ->send();
-                        }
-                    }),
+                            if (isset($response['error'])) {
+                                Notification::make()
+                                    ->title('Erro ao reiniciar')
+                                    ->danger()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Instância reiniciada')
+                                    ->success()
+                                    ->send();
+                            }
+                        }),
 
+                    Action::make('LogoutInstance')
+                        ->hidden(fn ($record) => $record->status->value !== 'open')
+                        ->label('Desconectar Instância')
+                        ->icon('fas-sign-out-alt')
+                        ->color('danger')
+                        ->action(function ($record) {
+                            $service  = new LogOutEvolutionInstanceService();
+                            $response = $service->logoutInstance($record->name);
+
+                            if (isset($response['error'])) {
+                                Notification::make()
+                                    ->title('Erro ao desconectar')
+                                    ->danger()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Instância desconectada')
+                                    ->body('Faça login novamente e escaneie o QR Code')
+                                    ->success()
+                                    ->send();
+                            }
+                        }),
+
+                    Action::make('ConectInstance')
+                        ->hidden(fn ($record) => $record->status->value === 'open')
+                        ->label('Conectar Instância')
+                        ->icon('fas-sign-in-alt')
+                        ->color('info')
+                        ->action(function ($record) {
+                            $service  = new ConnectEvolutionInstanceService();
+                            $response = $service->connectInstance($record->name);
+
+                            if (isset($response['error'])) {
+                                Notification::make()
+                                    ->title('Erro ao reconectar')
+                                    ->danger()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Instância reconectada')
+                                    ->body('Leia o QRcode para Ativar Sincronização dos dados')
+                                    ->success()
+                                    ->send();
+                            }
+                        }),
+
+                    Action::make('syncInstance')
+                        ->label('Sincronizar Dados')
+                        ->icon('fas-sync')
+                        ->color('info')
+                        ->action(function ($record) {
+                            $service  = new FetchEvolutionInstanceService();
+                            $response = $service->fetchInstance($record->name);
+
+                            if (isset($response['error'])) {
+                                Notification::make()
+                                    ->title('Erro ao sincronizar dados')
+                                    ->danger()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Instância sincronizada')
+                                    ->body('Dados sincronizados com sucesso')
+                                    ->success()
+                                    ->send();
+                            }
+                        }),
+
+                    Action::make('Enviar Mensagem')
+                        ->requiresConfirmation()
+                        ->hidden(fn ($record) => $record->status->value !== 'open')
+                        ->form([
+                            Fieldset::make('Envie sua mensagem')
+                                ->schema([
+                                    PhoneNumber::make('number_whatsapp')
+                                        ->label('Número WhatsApp')
+                                        ->mask('+55 (99) 99999-9999')
+                                        ->placeholder('+55 (99) 99999-9999')
+                                        ->required()
+                                        ->prefixIcon('fab-whatsapp'),
+
+                                    TextInput::make('message')
+                                        ->label('Mensagem'),
+
+                                ])->columns(1),
+                        ])
+
+                        ->modalHeading('Enviar Mensagem')
+                        ->modalDescription('Envie uma de teste para validar o serviço')
+                        ->color('success')
+                        ->icon('fab-whatsapp')
+                        ->action(function (Action $action, $record, array $data) {
+                            try {
+                                $service = new SendMessageEvolutionService();
+                                $service->sendMessage($record->name, $data);
+
+                                Notification::make()
+                                    ->title('Mensagem enviada')
+                                    ->body('Mensagem enviada com Sucesso')
+                                    ->success()
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Erro ao enviar mensagem')
+                                    ->body('Ocorreu um erro ao enviar mensagem: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->icon('fab-whatsapp')
+                        ->color('success'),
+                ])
+                    ->icon('fab-whatsapp')
+                    ->color('success'),
+
+                ActionGroup::make([
                     ViewAction::make()
                         ->color('primary'),
                     EditAction::make()
                         ->color('secondary'),
                     DeleteAction::make()
                         ->action(function ($record) {
-
                             $service  = new DeleteEvolutionInstanceService();
                             $response = $service->deleteInstance($record->name);
 
                             // Deleta o registro local após sucesso na API
                             $record->delete();
-
                         }),
                 ])
-                ->icon('fas-sliders')
-                ->color('warning'),
+                    ->icon('fas-sliders')
+                    ->color('warning'),
             ])
-            ->bulkActions([
-
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getRelations(): array

@@ -12,14 +12,14 @@ class LogOutEvolutionInstanceService
     public function logoutInstance(string $instanceId)
     {
         try {
-            $response = $this->makeRequest("/instance/{$instanceId}/logout", 'DELETE');
+            $response = $this->makeRequest("/instance/logout/{$instanceId}", 'DELETE');
 
-            //dd($response);
             if (isset($response['error'])) {
                 throw new Exception($response['error']);
             }
 
             return $response;
+
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }

@@ -11,16 +11,13 @@ class RestartEvolutionInstanceService
     public function restartInstance(string $instanceId)
     {
         try {
-            $response = $this->makeRequest("/instance/{$instanceId}/restart", 'POST');
+            $response = $this->makeRequest("/instance/restart/{$instanceId}", 'POST');
 
             if (isset($response['error'])) {
                 throw new Exception($response['error']);
             }
 
-            // Após o restart, chamar o serviço de conexão para gerar o QR Code
-            $connectService = new ConnectEvolutionInstanceService();
-
-            return $connectService->connectInstance($instanceId);
+            return $response;
 
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];

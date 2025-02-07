@@ -17,6 +17,7 @@ return new class () extends Migration {
             $table->string('name');
             $table->string('number');
             $table->string('instance_id')->nullable();
+            $table->string('profile_picture_url')->nullable();
             $table->string('hash')->nullable();
             $table->string('status')->nullable();
             $table->boolean('reject_call')->default(true);
@@ -26,6 +27,8 @@ return new class () extends Migration {
             $table->boolean('read_messages')->default(true);
             $table->boolean('read_status')->default(true);
             $table->boolean('sync_full_history')->default(true);
+            $table->string('count')->nullable();
+            $table->string('pairing_code')->nullable();
             $table->binary('qr_code')->nullable();
             $table->timestamps();
         });
