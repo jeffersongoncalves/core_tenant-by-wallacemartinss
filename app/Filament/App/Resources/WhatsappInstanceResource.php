@@ -183,7 +183,7 @@ class WhatsappInstanceResource extends Resource
                         ->hidden(fn ($record) => $record->status->value === 'close')
                         ->icon('fas-rotate-right')
                         ->color('warning')
-                        ->action(function ($record) {
+                        ->action(function ($record, $livewire) {
                             $service  = new RestartEvolutionInstanceService();
                             $response = $service->restartInstance($record->name);
 
@@ -198,6 +198,7 @@ class WhatsappInstanceResource extends Resource
                                     ->success()
                                     ->send();
                             }
+                            $livewire->dispatch('refresh');
                         }),
 
                     Action::make('LogoutInstance')
@@ -205,11 +206,11 @@ class WhatsappInstanceResource extends Resource
                         ->label('Desconectar Instância')
                         ->icon('fas-sign-out-alt')
                         ->color('danger')
-                        ->action(function ($record) {
+                        ->action(function ($record, $livewire) {
                             $service  = new LogOutEvolutionInstanceService();
                             $response = $service->logoutInstance($record->name);
 
-                            if (isset($response['error'])) {
+                            if (!empty($response['error'])) {
                                 Notification::make()
                                     ->title('Erro ao desconectar')
                                     ->danger()
@@ -221,6 +222,7 @@ class WhatsappInstanceResource extends Resource
                                     ->success()
                                     ->send();
                             }
+                            $livewire->dispatch('refresh');
                         }),
 
                     Action::make('ConectInstance')
@@ -228,7 +230,7 @@ class WhatsappInstanceResource extends Resource
                         ->label('Conectar Instância')
                         ->icon('fas-sign-in-alt')
                         ->color('info')
-                        ->action(function ($record) {
+                        ->action(function ($record, $livewire) {
                             $service  = new ConnectEvolutionInstanceService();
                             $response = $service->connectInstance($record->name);
 
@@ -244,13 +246,14 @@ class WhatsappInstanceResource extends Resource
                                     ->success()
                                     ->send();
                             }
+                            $livewire->dispatch('refresh');
                         }),
 
                     Action::make('syncInstance')
                         ->label('Sincronizar Dados')
                         ->icon('fas-sync')
                         ->color('info')
-                        ->action(function ($record) {
+                        ->action(function ($record, $livewire) {
                             $service  = new FetchEvolutionInstanceService();
                             $response = $service->fetchInstance($record->name);
 
@@ -266,6 +269,9 @@ class WhatsappInstanceResource extends Resource
                                     ->success()
                                     ->send();
                             }
+                            // Fecha o ActionGroup
+                            $livewire->dispatch('close-modal');
+                            $livewire->dispatch('refresh');
                         }),
 
                     Action::make('Enviar Mensagem')
@@ -291,7 +297,7 @@ class WhatsappInstanceResource extends Resource
                         ->modalDescription('Envie uma de teste para validar o serviço')
                         ->color('success')
                         ->icon('fab-whatsapp')
-                        ->action(function (Action $action, $record, array $data) {
+                        ->action(function (Action $action, $record, array $data, $livewire) {
                             try {
                                 $service = new SendMessageEvolutionService();
                                 $service->sendMessage($record->name, $data);
@@ -308,6 +314,7 @@ class WhatsappInstanceResource extends Resource
                                     ->danger()
                                     ->send();
                             }
+                            $livewire->dispatch('refresh');
                         })
                         ->icon('fab-whatsapp')
                         ->color('success'),
@@ -321,12 +328,13 @@ class WhatsappInstanceResource extends Resource
                     EditAction::make()
                         ->color('secondary'),
                     DeleteAction::make()
-                        ->action(function ($record) {
+                        ->action(function ($record, $livewire) {
                             $service  = new DeleteEvolutionInstanceService();
                             $response = $service->deleteInstance($record->name);
 
                             // Deleta o registro local após sucesso na API
                             $record->delete();
+                            $livewire->dispatch('refresh');
                         }),
                 ])
                     ->icon('fas-sliders')

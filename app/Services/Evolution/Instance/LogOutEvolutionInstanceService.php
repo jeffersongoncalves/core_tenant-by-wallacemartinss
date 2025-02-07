@@ -14,7 +14,8 @@ class LogOutEvolutionInstanceService
         try {
             $response = $this->makeRequest("/instance/logout/{$instanceId}", 'DELETE');
 
-            if (isset($response['error'])) {
+            // Check if 'error' is present and truthy
+            if (!empty($response['error'])) {
                 throw new Exception($response['error']);
             }
 

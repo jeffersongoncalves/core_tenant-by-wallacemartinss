@@ -4,7 +4,7 @@ namespace App\Filament\Admin\Resources;
 
 use App\Enums\Stripe\{ProductIntervalEnum, SubscriptionStatusEnum};
 use App\Filament\Admin\Resources\OrganizationResource\Pages;
-use App\Filament\Admin\Resources\OrganizationResource\RelationManagers\{SubscriptionRefundsRelationManager, SubscriptionRelationManager, UserRelationManager};
+use App\Filament\Admin\Resources\OrganizationResource\RelationManagers\{SubscriptionRefundsRelationManager, SubscriptionRelationManager, UserRelationManager, WhatsappInstanceRelationManager};
 use App\Models\{Organization, Price};
 use Filament\Forms\Components\{Fieldset, Grid, TextInput};
 use Filament\Forms\{Form, Set};
@@ -287,6 +287,7 @@ class OrganizationResource extends Resource
             UserRelationManager::class,
             SubscriptionRelationManager::class,
             SubscriptionRefundsRelationManager::class,
+            WhatsappInstanceRelationManager::class,
         ];
     }
 
