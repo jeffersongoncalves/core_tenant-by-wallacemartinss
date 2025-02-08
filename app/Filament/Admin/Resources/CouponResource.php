@@ -6,7 +6,6 @@ use App\Enums\Stripe\{ProductCurrencyEnum, PromotionDurationEnum};
 use App\Filament\Admin\Resources\CouponResource\{Pages};
 use App\Models\Coupon;
 use App\Services\Stripe\Discount\{DeleteStripeCouponService};
-
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\{Fieldset, Select, TextInput};
 use Filament\Forms\Form;
@@ -33,7 +32,6 @@ class CouponResource extends Resource
     protected static ?int $navigationSort = 2;
 
     protected static bool $isScopedToTenant = false;
-
     public static function form(Form $form): Form
     {
         return $form

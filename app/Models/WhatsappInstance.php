@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Enums\Evolution\StatusConnectionEnum;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 
 class WhatsappInstance extends Model
 {
@@ -43,6 +43,16 @@ class WhatsappInstance extends Model
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    public function instanceTypebots(): HasMany
+    {
+        return $this->hasMany(InstanceTypebot::class);
+    }
+
+    public function typebots()
+    {
+        return $this->hasMany(InstanceTypebot::class, 'whatsapp_instance_id');
     }
 
 }

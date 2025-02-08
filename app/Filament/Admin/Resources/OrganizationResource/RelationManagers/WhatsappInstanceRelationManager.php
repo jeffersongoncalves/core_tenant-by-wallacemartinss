@@ -309,32 +309,32 @@ class WhatsappInstanceRelationManager extends RelationManager
                           })
                           ->icon('fab-whatsapp')
                           ->color('success'),
-                ])
+                  ])
                       ->icon('fab-whatsapp')
                       ->color('success'),
 
                   ActionGroup::make([
-                    ViewAction::make()
-                          ->color('primary'),
-                    EditAction::make()
-                          ->color('secondary'),
-                    DeleteAction::make()
-                          ->action(function ($record, $livewire) {
-                              $service  = new DeleteEvolutionInstanceService();
-                              $response = $service->deleteInstance($record->name);
+                      ViewAction::make()
+                            ->color('primary'),
+                      EditAction::make()
+                            ->color('secondary'),
+                      DeleteAction::make()
+                            ->action(function ($record, $livewire) {
+                                $service  = new DeleteEvolutionInstanceService();
+                                $response = $service->deleteInstance($record->name);
 
-                              // Deleta o registro local após sucesso na API
-                              $record->delete();
-                              $livewire->dispatch('refresh');
-                          }),
-                ])
+                                // Deleta o registro local após sucesso na API
+                                $record->delete();
+                                $livewire->dispatch('refresh');
+                            }),
+                  ])
                       ->icon('fas-sliders')
                       ->color('warning'),
               ])
               ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+                  Tables\Actions\BulkActionGroup::make([
+                      Tables\Actions\DeleteBulkAction::make(),
+                  ]),
+              ]);
     }
 }

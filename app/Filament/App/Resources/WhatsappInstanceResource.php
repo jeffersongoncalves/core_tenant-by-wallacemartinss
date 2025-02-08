@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources;
 
+use App\Filament\App\Resources\WhatsappInstanceResource\RelationManagers\InstanceTypebotsRelationManager;
 use App\Filament\App\Resources\WhatsappInstanceResource\{Pages};
 use App\Models\{WhatsappInstance};
 use App\Services\Evolution\Instance\{ConnectEvolutionInstanceService, DeleteEvolutionInstanceService, LogOutEvolutionInstanceService};
@@ -142,6 +143,12 @@ class WhatsappInstanceResource extends Resource
 
                 TextColumn::make('instance_id')
                     ->label('ID da Instância')
+                    ->searchable(),
+
+                TextColumn::make('bots_count')
+                    ->label('Quantidade de Robôs')
+                    ->alignCenter()
+                    ->getStateUsing(fn ($record) => $record->typebots()->where('is_active', true)->count() ?? 0)
                     ->searchable(),
 
                 TextColumn::make('created_at')
@@ -346,7 +353,7 @@ class WhatsappInstanceResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            InstanceTypebotsRelationManager::class,
         ];
     }
 
