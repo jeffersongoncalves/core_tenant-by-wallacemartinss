@@ -61,6 +61,13 @@ cd core_tenant
 
 ```
 
+```bash
+
+laravel new core_tenant --using=wallacemartinss/core_tenant
+cd core_tenant
+
+```
+
 2. Copy .ENV file
 
 ```bash
